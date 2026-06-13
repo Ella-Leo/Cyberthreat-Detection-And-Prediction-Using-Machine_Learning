@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User System Dashboard</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background: #1e293b;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container {
+            padding: 30px;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .user-box {
+            background: #334155;
+            padding: 15px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Cyber Threat Detection and Prediction System</h1>
+<p>User Dashboard</p>
+</div>
+
+<div class="container">
+
+    <div class="user-box">
+    <h2>User Information</h2>
+
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Role:</strong> {{ user.role }}</p>
+    <p><strong>Status:</strong> Active </p>
+
+    <a href="/logout">
+        <button class="btn">Logout</button>
+    </a>
+</div>
+
+    <div class="card">
+        <h2> About This System</h2>
+        <p>
+            analytics.Cyber Threat Detection and Prediction Using Machine Learning is a comprehensive cybersecurity solution that leverages machine learning techniques to enhance threat detection, risk assessment, and predictive analysis. The system is designed to automatically identify suspicious activities, detect cyberattacks, and forecast emerging threats before they occur. It integrates data preprocessing, threat classification, anomaly detection, predictive analytics, and reporting modules into a unified platform. A built-in SOC dashboard provides real-time monitoring, alert management, threat visualization, and security reporting, allowing organizations to strengthen their cybersecurity posture and respond proactively to evolving cyber threats
+        </p>
+    </div>
+
+    <div class="card">
+        <h2> Core Features</h2>
+        <ul>
+            <li>Threat Detection using Machine Learning</li>
+            <li>Real-time Security Monitoring</li>
+            <li>Attack Prediction & Risk Forecasting</li>
+            <li>Security Reports (PDF, CSV, Excel)</li>
+            <li>Alert Management System</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2> System Modules</h2>
+        <ul>
+            <li>Module 1: Authentication System</li>
+            <li>Module 2: Data Processing Pipeline</li>
+            <li>Module 3: Threat Detection Model</li>
+            <li>Module 4: Prediction Engine</li>
+            <li>Module 5: Reporting Dashboard</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>

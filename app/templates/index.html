@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Threat System</title>
+
+    <!-- ✅ Flask static CSS link -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="glass-box">
+
+        <div class="brand">Cyberthreat Detection and Prediction System</div>
+        <div class="subtitle">Secure • Predict • Protect</div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="active" onclick="showLogin()">Login</button>
+            <button onclick="showRegister()">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div id="loginForm">
+            <form method="POST" action="/login">
+
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Username" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+
+                <button class="btn">Login</button>
+            </form>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div id="registerForm" style="display:none;">
+            <form method="POST" action="/register">
+
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Username" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="email" name="email" placeholder="Email" required>
+                </div>
+
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+
+                <button class="btn">Create Account</button>
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function showLogin(){
+    document.getElementById("loginForm").style.display="block";
+    document.getElementById("registerForm").style.display="none";
+}
+
+function showRegister(){
+    document.getElementById("loginForm").style.display="none";
+    document.getElementById("registerForm").style.display="block";
+}
+</script>
+
+</body>
+</html>
