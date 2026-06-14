@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card p-3">
+    <h4>Generate Reports</h4>
+
+    <a href="{{ url_for('create_report', filetype='csv') }}" class="btn btn-success">Export CSV</a>
+    <a href="{{ url_for('create_report', filetype='pdf') }}" class="btn btn-warning">Export PDF</a>
+
+    <hr>
+
+    <h5>Previous Reports</h5>
+    <ul>
+        {% for r in reports %}
+            <li>{{ r }}</li>
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}

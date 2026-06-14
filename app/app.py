@@ -1,10 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from sqlalchemy.exc import IntegrityError
 
+import pandas as pd
+import os
+from datetime import datetime
+from fpdf import FPDF
+
 app = Flask(__name__)
+
+REPORT_FOLDER = "reports"
+os.makedirs(REPORT_FOLDER, exist_ok=True)
+
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
@@ -113,6 +122,183 @@ def admin_dashboard():
     return render_template("admin_dashboard.html", user=current_user)
 
 
+# ---------------- SOC DASHBOARD (STREAMLIT REDIRECT) ----------------
+STREAMLIT_URL = "http://localhost:8501"  # later change to deployed Streamlit URL
+
+@app.route("/soc_dashboard")
+@login_required
+def soc_dashboard():
+    return redirect(STREAMLIT_URL)
+
+
+REPORT_FOLDER = "generated_reports"
+os.makedirs(REPORT_FOLDER, exist_ok=True)
+
+@app.route("/generate_reports")
+@login_required
+def generate_reports():
+    reports = os.listdir(REPORT_FOLDER)
+    return render_template("generate_reports.html", reports=reports)
+
+
+@app.route("/generate_reports/create/<filetype>")
+@login_required
+def create_report(filetype):
+    # MOCK DATA (replace with DB later)
+    data = {
+        "threat": ["SQL Injection", "DDoS", "Phishing"],
+        "severity": ["High", "Critical", "Medium"],
+        "time": [datetime.now(), datetime.now(), datetime.now()]
+    }
+
+    df = pd.DataFrame(data)
+
+    filename = f"report_{datetime.now().strftime('%Y%m%d%H%M%S')}.{filetype}"
+    path = os.path.join(REPORT_FOLDER, filename)
+
+    if filetype == "csv":
+        df.to_csv(path, index=False)
+
+    elif filetype == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        for i in range(len(df)):
+            pdf.cell(200, 10, txt=str(df.iloc[i].to_dict()), ln=True)
+
+        pdf.output(path)
+
+    flash("Report generated successfully!", "success")
+    return redirect(url_for("generate_reports"))
+
+@app.route("/download_report/<filename>")
+@login_required
+def download_report(filename):
+    return send_from_directory(
+        REPORT_FOLDER,
+        filename,
+        as_attachment=True
+    )
+
+@app.route("/delete_report/<filename>")
+@login_required
+def delete_report(filename):
+    path = os.path.join(REPORT_FOLDER, filename)
+
+    if os.path.exists(path):
+        os.remove(path)
+        flash("Report deleted successfully!", "success")
+    else:
+        flash("File not found!", "danger")
+
+    return redirect(url_for("generate_reports"))
+
+
+@app.route("/manage_users", methods=["GET", "POST"])
+@login_required
+def manage_users():
+    if request.method == "POST":
+
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        role = request.form.get("role")
+
+        # Check required fields
+        if not username or not email or not password:
+            flash("All fields are required.", "danger")
+            return redirect(url_for("manage_users"))
+
+        # Check duplicates
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("Email already exists.", "danger")
+            return redirect(url_for("manage_users"))
+
+        # Hash password
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        # Create user
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            role=role
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("User added successfully", "success")
+        return redirect(url_for("manage_users"))
+
+    users = User.query.all()
+    return render_template("manage_users.html", users=users)
+
+@app.route("/manage_users", methods=["GET", "POST"])
+@login_required
+def manage_users():
+
+     # restrict to admin only
+    if current_user.role != "admin":
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for("dashboard"))
+
+    if request.method == "POST":
+
+        username = request.form.get("username")
+        email = request.form.get("email")
+        password = request.form.get("password")
+        role = request.form.get("role")
+
+        # Validation
+        if not username or not email or not password:
+            flash("All fields are required", "danger")
+            return redirect(url_for("manage_users"))
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            flash("Email already exists", "danger")
+            return redirect(url_for("manage_users"))
+
+        # Hash password
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+        # Create user
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            role=role
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("User added successfully", "success")
+        return redirect(url_for("manage_users"))
+
+    # GET request → show all users
+    users = User.query.all()
+    return render_template("manage_users.html", users=users)
+
+@app.route("/delete_user/<int:user_id>")
+@login_required
+def delete_user(user_id):
+
+    if current_user.role != "admin":
+        flash("Access denied. Admins only.", "danger")
+        return redirect(url_for("dashboard"))
+
+    user = User.query.get_or_404(user_id)
+
+    db.session.delete(user)
+    db.session.commit()
+
+    flash("User deleted successfully", "success")
+    return redirect(url_for("manage_users"))
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 @login_required
