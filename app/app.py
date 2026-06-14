@@ -36,26 +36,39 @@ def home():
 
 
 # ---------------- REGISTER ----------------
-@app.route("/register", methods=["POST"])
+from sqlalchemy.exc import IntegrityError
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    username = request.form["username"]
-    email = request.form["email"]
-    password = request.form["password"]
-    role = request.form["role"]
+    if request.method == "POST":
+        username = request.form["username"]
+        email = request.form["email"]
+        password = request.form["password"]
+        role = request.form["role"]
 
-    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        existing_user = User.query.filter_by(email=email).first()
+        if existing_user:
+            return "Email already exists. Please use another email."
 
-    new_user = User(
-        username=username,
-        email=email,
-        password=hashed_password,
-        role=role
-    )
+        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-    db.session.add(new_user)
-    db.session.commit()
+        new_user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            role=role
+        )
 
-    return redirect(url_for("home"))
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+            return "User already exists."
+
+        return redirect(url_for("home"))
+
+    return render_template("register.html")
 
 
 # ---------------- LOGIN ----------------
