@@ -1,8 +1,0 @@
-Flask
-gunicorn
-flask_sqlalchemy
-flask_bcrypt
-flask_login
-pandas
-numpy
-flask-jwt-extended
