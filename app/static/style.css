@@ -69,6 +69,7 @@ body::before{
     color:#cbd5e1;
     cursor:pointer;
     font-weight:bold;
+    transition:0.3s;
 }
 
 .tabs button.active{
@@ -81,7 +82,8 @@ body::before{
     margin-bottom:15px;
 }
 
-.input-group input{
+.input-group input,
+.input-group select{
     width:100%;
     padding:12px;
     border-radius:10px;
@@ -89,11 +91,26 @@ body::before{
     background:rgba(2,6,23,0.7);
     color:white;
     outline:none;
+    box-sizing:border-box;
+    font-size:14px;
 }
 
-.input-group input:focus{
+/* PLACEHOLDER */
+.input-group input::placeholder{
+    color:#94a3b8;
+}
+
+/* INPUT + SELECT FOCUS */
+.input-group input:focus,
+.input-group select:focus{
     border-color:#22d3ee;
     box-shadow:0 0 10px rgba(34,211,238,0.3);
+}
+
+/* DROPDOWN OPTIONS */
+.input-group select option{
+    background:#0f172a;
+    color:white;
 }
 
 /* BUTTON */

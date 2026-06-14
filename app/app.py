@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from sqlalchemy.exc import IntegrityError
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
@@ -36,39 +37,43 @@ def home():
 
 
 # ---------------- REGISTER ----------------
-from sqlalchemy.exc import IntegrityError
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
-        role = request.form["role"]
-
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            return "Email already exists. Please use another email."
-
-        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-
-        new_user = User(
-            username=username,
-            email=email,
-            password=hashed_password,
-            role=role
-        )
-
         try:
+            username = request.form.get("username")
+            email = request.form.get("email")
+            password = request.form.get("password")
+            role = request.form.get("role", "user")  # default safe value
+
+            if not username or not email or not password:
+                return "Missing form data", 400
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return "Email already exists. Please use another email."
+
+            hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+
+            new_user = User(
+                username=username,
+                email=email,
+                password=hashed_password,
+                role=role
+            )
+
             db.session.add(new_user)
             db.session.commit()
+
+            return redirect(url_for("home"))
+
         except IntegrityError:
             db.session.rollback()
-            return "User already exists."
+            return "User already exists (database constraint)."
 
-        return redirect(url_for("home"))
-
-    return render_template("register.html")
+        except Exception as e:
+            return f"Server error: {str(e)}", 500
+return render_template("index.html")
 
 
 # ---------------- LOGIN ----------------
@@ -76,21 +81,23 @@ def register():
 def login():
     username = request.form["username"]
     password = request.form["password"]
+    role = request.form["role"]
 
     user = User.query.filter_by(username=username).first()
 
     if user and bcrypt.check_password_hash(user.password, password):
+
+        if user.role != role:
+            return "Incorrect role selected."
+
         login_user(user)
 
-        # redirect based on role
         if user.role == "admin":
             return redirect(url_for("admin_dashboard"))
         else:
             return redirect(url_for("dashboard"))
 
     return "Invalid login details"
-
-
 # ---------------- USER DASHBOARD ----------------
 @app.route("/dashboard")
 @login_required
@@ -103,6 +110,8 @@ def dashboard():
 @login_required
 def admin_dashboard():
     return render_template("admin_dashboard.html", user=current_user)
+
+
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 @login_required
