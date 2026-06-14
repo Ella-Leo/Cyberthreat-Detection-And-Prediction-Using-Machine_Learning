@@ -73,7 +73,8 @@ def register():
 
         except Exception as e:
             return f"Server error: {str(e)}", 500
-return render_template("index.html")
+
+    return render_template("index.html")
 
 
 # ---------------- LOGIN ----------------
@@ -81,7 +82,7 @@ return render_template("index.html")
 def login():
     username = request.form["username"]
     password = request.form["password"]
-    role = request.form["role"]
+    role = request.form.get("role")
 
     user = User.query.filter_by(username=username).first()
 
