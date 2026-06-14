@@ -1,0 +1,16 @@
+flask
+flask-bcrypt
+flask-jwt-extended
+flask-login
+flask-sqlalchemy
+gunicorn
+jinja2
+matplotlib
+numpy
+pandas
+plotly
+requests
+scikit-learn
+scipy
+sqlalchemy
+werkzeug
