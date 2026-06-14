@@ -9,10 +9,8 @@ import os
 from datetime import datetime
 from fpdf import FPDF
 
+# ---------------- APP INIT ----------------
 app = Flask(__name__)
-
-REPORT_FOLDER = "reports"
-os.makedirs(REPORT_FOLDER, exist_ok=True)
 
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
@@ -24,6 +22,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
 
+# ---------------- FOLDERS ----------------
+REPORT_FOLDER = "generated_reports"
+UPLOAD_FOLDER = "uploads"
+
+os.makedirs(REPORT_FOLDER, exist_ok=True)
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ---------------- DATABASE MODEL ----------------
 class User(db.Model, UserMixin):
@@ -38,12 +42,10 @@ class User(db.Model, UserMixin):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-
 # ---------------- HOME ----------------
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
@@ -53,14 +55,13 @@ def register():
             username = request.form.get("username")
             email = request.form.get("email")
             password = request.form.get("password")
-            role = request.form.get("role", "user")  # default safe value
+            role = request.form.get("role", "user")
 
             if not username or not email or not password:
                 return "Missing form data", 400
 
-            existing_user = User.query.filter_by(email=email).first()
-            if existing_user:
-                return "Email already exists. Please use another email."
+            if User.query.filter_by(email=email).first():
+                return "Email already exists"
 
             hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
@@ -78,13 +79,9 @@ def register():
 
         except IntegrityError:
             db.session.rollback()
-            return "User already exists (database constraint)."
-
-        except Exception as e:
-            return f"Server error: {str(e)}", 500
+            return "User already exists"
 
     return render_template("index.html")
-
 
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["POST"])
@@ -98,7 +95,7 @@ def login():
     if user and bcrypt.check_password_hash(user.password, password):
 
         if user.role != role:
-            return "Incorrect role selected."
+            return "Incorrect role selected"
 
         login_user(user)
 
@@ -108,32 +105,28 @@ def login():
             return redirect(url_for("dashboard"))
 
     return "Invalid login details"
-# ---------------- USER DASHBOARD ----------------
+
+# ---------------- DASHBOARDS ----------------
 @app.route("/dashboard")
 @login_required
 def dashboard():
     return render_template("dashboard.html", user=current_user)
 
 
-# ---------------- ADMIN DASHBOARD ----------------
 @app.route("/admin")
 @login_required
 def admin_dashboard():
     return render_template("admin_dashboard.html", user=current_user)
 
-
-# ---------------- SOC DASHBOARD (STREAMLIT REDIRECT) ----------------
-STREAMLIT_URL = "http://localhost:8501"  # later change to deployed Streamlit URL
+# ---------------- SOC DASHBOARD ----------------
+STREAMLIT_URL = "http://localhost:8501"
 
 @app.route("/soc_dashboard")
 @login_required
 def soc_dashboard():
     return redirect(STREAMLIT_URL)
 
-
-REPORT_FOLDER = "generated_reports"
-os.makedirs(REPORT_FOLDER, exist_ok=True)
-
+# ---------------- REPORTS ----------------
 @app.route("/generate_reports")
 @login_required
 def generate_reports():
@@ -144,7 +137,7 @@ def generate_reports():
 @app.route("/generate_reports/create/<filetype>")
 @login_required
 def create_report(filetype):
-    # MOCK DATA (replace with DB later)
+
     data = {
         "threat": ["SQL Injection", "DDoS", "Phishing"],
         "severity": ["High", "Critical", "Medium"],
@@ -175,11 +168,8 @@ def create_report(filetype):
 @app.route("/download_report/<filename>")
 @login_required
 def download_report(filename):
-    return send_from_directory(
-        REPORT_FOLDER,
-        filename,
-        as_attachment=True
-    )
+    return send_from_directory(REPORT_FOLDER, filename, as_attachment=True)
+
 
 @app.route("/delete_report/<filename>")
 @login_required
@@ -188,59 +178,17 @@ def delete_report(filename):
 
     if os.path.exists(path):
         os.remove(path)
-        flash("Report deleted successfully!", "success")
+        flash("Report deleted", "success")
     else:
-        flash("File not found!", "danger")
+        flash("File not found", "danger")
 
     return redirect(url_for("generate_reports"))
 
-
-@app.route("/manage_users", methods=["GET", "POST"])
-@login_required
-def manage_users():
-    if request.method == "POST":
-
-        username = request.form.get("username")
-        email = request.form.get("email")
-        password = request.form.get("password")
-        role = request.form.get("role")
-
-        # Check required fields
-        if not username or not email or not password:
-            flash("All fields are required.", "danger")
-            return redirect(url_for("manage_users"))
-
-        # Check duplicates
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
-            flash("Email already exists.", "danger")
-            return redirect(url_for("manage_users"))
-
-        # Hash password
-        hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-
-        # Create user
-        new_user = User(
-            username=username,
-            email=email,
-            password=hashed_password,
-            role=role
-        )
-
-        db.session.add(new_user)
-        db.session.commit()
-
-        flash("User added successfully", "success")
-        return redirect(url_for("manage_users"))
-
-    users = User.query.all()
-    return render_template("manage_users.html", users=users)
-
+# ---------------- MANAGE USERS (FIXED SINGLE VERSION) ----------------
 @app.route("/manage_users", methods=["GET", "POST"])
 @login_required
 def manage_users():
 
-     # restrict to admin only
     if current_user.role != "admin":
         flash("Access denied. Admins only.", "danger")
         return redirect(url_for("dashboard"))
@@ -252,21 +200,16 @@ def manage_users():
         password = request.form.get("password")
         role = request.form.get("role")
 
-        # Validation
         if not username or not email or not password:
             flash("All fields are required", "danger")
             return redirect(url_for("manage_users"))
 
-        # Check if user already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        if User.query.filter_by(email=email).first():
             flash("Email already exists", "danger")
             return redirect(url_for("manage_users"))
 
-        # Hash password
         hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
 
-        # Create user
         new_user = User(
             username=username,
             email=email,
@@ -280,16 +223,16 @@ def manage_users():
         flash("User added successfully", "success")
         return redirect(url_for("manage_users"))
 
-    # GET request → show all users
     users = User.query.all()
     return render_template("manage_users.html", users=users)
 
+# ---------------- DELETE USER ----------------
 @app.route("/delete_user/<int:user_id>")
 @login_required
 def delete_user(user_id):
 
     if current_user.role != "admin":
-        flash("Access denied. Admins only.", "danger")
+        flash("Access denied", "danger")
         return redirect(url_for("dashboard"))
 
     user = User.query.get_or_404(user_id)
@@ -297,8 +240,9 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
 
-    flash("User deleted successfully", "success")
+    flash("User deleted", "success")
     return redirect(url_for("manage_users"))
+
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
 @login_required
@@ -306,11 +250,10 @@ def logout():
     logout_user()
     return redirect(url_for("home"))
 
-
 # ---------------- CREATE DB ----------------
 with app.app_context():
     db.create_all()
 
-
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)
