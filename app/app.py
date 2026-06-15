@@ -15,6 +15,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'supersecretkey'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
+REPORT_FOLDER = os.path.join(os.getcwd(), "generated_reports")
+
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 
@@ -197,9 +199,33 @@ def delete_report(filename):
     return redirect(url_for("generate_reports"))
 
 # ---------------- THREAT PREDICTION ----------------
-@app.route("/threat_prediction")
+@app.route("/threat_prediction", methods=["GET", "POST"])
 @login_required
 def threat_prediction():
+
+    if request.method == "POST":
+
+        uploaded_file = request.files.get("file")
+
+        if not uploaded_file:
+            flash("Please upload a CSV file", "danger")
+            return redirect(url_for("threat_prediction"))
+
+        filepath = os.path.join(UPLOAD_FOLDER, uploaded_file.filename)
+        uploaded_file.save(filepath)
+
+        # Load CSV
+        df = pd.read_csv(filepath)
+
+        # MOCK PREDICTIONS
+        df["Prediction"] = "Normal"
+
+        return render_template(
+            "threat_prediction.html",
+            raw_data=df.head(50).to_html(classes="table table-dark", index=False),
+            results=df[["Prediction"]].head(50).to_html(classes="table table-dark", index=False)
+        )
+
     return render_template("threat_prediction.html")
 
 # ---------------- MANAGE USERS (FIXED SINGLE VERSION) ----------------
