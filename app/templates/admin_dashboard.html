@@ -51,17 +51,9 @@
             color:white;
         }
 
-        .red{
-            background:red;
-        }
-
-        .green{
-            background:green;
-        }
-
-        .blue{
-            background:#2563eb;
-        }
+        .red{ background:red; }
+        .green{ background:green; }
+        .blue{ background:#2563eb; }
 
         table{
             width:100%;
@@ -80,6 +72,7 @@
         }
     </style>
 </head>
+
 <body>
 
 <div class="header">
@@ -163,26 +156,22 @@
         </table>
     </div>
 
-   <!-- QUICK ACTIONS -->
-<div class="card">
-    <h2>⚡ Administrative Actions</h2>
+    <!-- QUICK ACTIONS -->
+    <div class="card">
+        <h2>⚡ Administrative Actions</h2>
 
-    <a href="{{ url_for('soc_dashboard') }}">
-        <button class="btn blue">SOC Dashboard</button>
-    </a>
+        <a href="{{ url_for('soc_dashboard') }}">
+            <button class="btn blue">SOC Dashboard</button>
+        </a>
 
-    <a href="{{ url_for('generate_reports') }}">
-        <button class="btn green">Generate Reports</button>
-    </a>
+        <a href="{{ url_for('threat_prediction') }}">
+            <button class="btn blue">Threat Prediction</button>
+        </a>
 
-    <a href="{{ url_for('threat_prediction') }}">
-        <button class="btn blue">Threat Prediction</button>
-    </a>
-
-    <a href="{{ url_for('manage_users') }}">
-        <button class="btn green">Manage Users</button>
-    </a>
-</div>
+        <a href="{{ url_for('manage_users') }}">
+            <button class="btn green">Manage Users</button>
+        </a>
+    </div>
 
     <!-- ABOUT SYSTEM -->
     <div class="card">
