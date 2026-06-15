@@ -205,19 +205,35 @@ def threat_prediction():
 
     if request.method == "POST":
 
-        uploaded_file = request.files.get("file")
-
-        if not uploaded_file:
-            flash("Please upload a CSV file", "danger")
+        # 1. Check request contains file
+        if "file" not in request.files:
+            flash("No file part found in request", "danger")
             return redirect(url_for("threat_prediction"))
 
+        uploaded_file = request.files["file"]
+
+        # 2. Check file selected
+        if uploaded_file.filename == "":
+            flash("No file selected", "danger")
+            return redirect(url_for("threat_prediction"))
+
+        # 3. Optional: check CSV extension
+        if not uploaded_file.filename.endswith(".csv"):
+            flash("Only CSV files allowed", "danger")
+            return redirect(url_for("threat_prediction"))
+
+        # 4. Save file safely
         filepath = os.path.join(UPLOAD_FOLDER, uploaded_file.filename)
         uploaded_file.save(filepath)
 
-        # Load CSV
-        df = pd.read_csv(filepath)
+        # 5. Read CSV safely
+        try:
+            df = pd.read_csv(filepath)
+        except Exception as e:
+            flash(f"Error reading CSV file: {str(e)}", "danger")
+            return redirect(url_for("threat_prediction"))
 
-        # MOCK PREDICTIONS
+        # 6. Mock prediction
         df["Prediction"] = "Normal"
 
         return render_template(
@@ -228,7 +244,7 @@ def threat_prediction():
 
     return render_template("threat_prediction.html")
 
-# ---------------- MANAGE USERS (FIXED SINGLE VERSION) ----------------
+# ---------------- MANAGE USERS----------------
 @app.route("/manage_users", methods=["GET", "POST"])
 @login_required
 def manage_users():
@@ -281,10 +297,14 @@ def delete_user(user_id):
 
     user = User.query.get_or_404(user_id)
 
+    if user.id == current_user.id:
+        flash("You cannot delete your own account.", "danger")
+        return redirect(url_for("manage_users"))
+
     db.session.delete(user)
     db.session.commit()
 
-    flash("User deleted", "success")
+    flash("User deleted successfully.", "success")
     return redirect(url_for("manage_users"))
 
 # ---------------- LOGOUT ----------------
