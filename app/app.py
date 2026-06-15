@@ -116,7 +116,19 @@ def dashboard():
 @app.route("/admin")
 @login_required
 def admin_dashboard():
-    return render_template("admin_dashboard.html", user=current_user)
+
+    users = User.query.all()
+
+    return render_template(
+        "admin_dashboard.html",
+        user=current_user,
+        users=users,
+        total_users=len(users),
+        total_threats=0,
+        high_risk=0,
+        predictions=0,
+        alerts=[]
+    )
 
 # ---------------- SOC DASHBOARD ----------------
 STREAMLIT_URL = "http://localhost:8501"
@@ -183,6 +195,12 @@ def delete_report(filename):
         flash("File not found", "danger")
 
     return redirect(url_for("generate_reports"))
+
+# ---------------- THREAT PREDICTION ----------------
+@app.route("/threat_prediction")
+@login_required
+def threat_prediction():
+    return render_template("threat_prediction.html")
 
 # ---------------- MANAGE USERS (FIXED SINGLE VERSION) ----------------
 @app.route("/manage_users", methods=["GET", "POST"])
