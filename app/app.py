@@ -133,7 +133,7 @@ def admin_dashboard():
     )
 
 # ---------------- SOC DASHBOARD ----------------
-STREAMLIT_URL = "http://localhost:8501"
+STREAMLIT_URL = "https://cyberthreat-detection-and-prediction-using-machinelearning-qep.streamlit.app/"
 
 @app.route("/soc_dashboard")
 @login_required
