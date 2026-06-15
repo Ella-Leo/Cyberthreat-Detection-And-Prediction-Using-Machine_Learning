@@ -115,7 +115,7 @@ def dashboard():
     return render_template("dashboard.html", user=current_user)
 
 
-@app.route("/admin")
+@app.route("/admin_dashboard")
 @login_required
 def admin_dashboard():
 
