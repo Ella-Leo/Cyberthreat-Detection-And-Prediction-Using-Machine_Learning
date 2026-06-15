@@ -149,49 +149,43 @@ def threat_prediction():
 
     if request.method == "POST":
 
-        # 1. Check request contains file
         if "file" not in request.files:
             flash("No file part found in request", "danger")
             return redirect(url_for("threat_prediction"))
 
         uploaded_file = request.files["file"]
 
-        # 2. Check file selected
         if uploaded_file.filename == "":
             flash("No file selected", "danger")
             return redirect(url_for("threat_prediction"))
 
-        # 3. Optional: check CSV extension
         if not uploaded_file.filename.endswith(".csv"):
             flash("Only CSV files allowed", "danger")
             return redirect(url_for("threat_prediction"))
 
-        # 4. Save file safely
         filepath = os.path.join(UPLOAD_FOLDER, uploaded_file.filename)
         uploaded_file.save(filepath)
 
-        # 5. Read CSV safely
         try:
             df = pd.read_csv(filepath)
         except Exception as e:
             flash(f"Error reading CSV file: {str(e)}", "danger")
             return redirect(url_for("threat_prediction"))
 
-        # 6. Mock prediction
         df["Prediction"] = "Normal"
+
+        predictions = df.to_dict(orient="records")
 
         return render_template(
             "threat_prediction.html",
-            raw_data=df.head(50).to_html(classes="table table-dark", index=False),
-            results=df[["Prediction"]].head(50).to_html(classes="table table-dark", index=False)
+            predictions=predictions
         )
 
+    # GET request (IMPORTANT FIX)
     return render_template(
-    "threat_prediction.html",
-    data=True,
-    predictions=df.to_dict(orient="records")
-)
-
+        "threat_prediction.html",
+        predictions=None
+    )
 # ---------------- MANAGE USERS----------------
 @app.route("/manage_users", methods=["GET", "POST"])
 @login_required
