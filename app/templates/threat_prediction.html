@@ -98,37 +98,21 @@
         </form>
 
     </div>
+{% if predictions %}
+<table>
+    <tr>
+        <th>Row</th>
+        <th>Prediction</th>
+    </tr>
 
-    {% if data is not none and predictions is not none %}
-
-    <div class="card">
-
-        <h3>Results</h3>
-
-        <table>
-            <tr>
-                <th>Row</th>
-                <th>Prediction</th>
-                <th>Model</th>
-            </tr>
-
-            {% for p in predictions %}
-            <tr>
-                <td>{{ p.row }}</td>
-
-                <td class="{% if p.prediction == 'Threat' %}threat{% else %}normal{% endif %}">
-                    {{ p.prediction }}
-                </td>
-
-                <td>{{ p.model }}</td>
-            </tr>
-            {% endfor %}
-
-        </table>
-
-    </div>
-
-    {% endif %}
+    {% for p in predictions %}
+    <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ p.Prediction }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
 
 </div>
 

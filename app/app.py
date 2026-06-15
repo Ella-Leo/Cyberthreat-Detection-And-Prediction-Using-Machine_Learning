@@ -140,63 +140,7 @@ STREAMLIT_URL = "https://cyberthreat-detection-and-prediction-using-machinelearn
 def soc_dashboard():
     return redirect(STREAMLIT_URL)
 
-# ---------------- REPORTS ----------------
-@app.route("/generate_reports")
-@login_required
-def generate_reports():
-    reports = os.listdir(REPORT_FOLDER)
-    return render_template("generate_reports.html", reports=reports)
 
-
-@app.route("/generate_reports/create/<filetype>")
-@login_required
-def create_report(filetype):
-
-    data = {
-        "threat": ["SQL Injection", "DDoS", "Phishing"],
-        "severity": ["High", "Critical", "Medium"],
-        "time": [datetime.now(), datetime.now(), datetime.now()]
-    }
-
-    df = pd.DataFrame(data)
-
-    filename = f"report_{datetime.now().strftime('%Y%m%d%H%M%S')}.{filetype}"
-    path = os.path.join(REPORT_FOLDER, filename)
-
-    if filetype == "csv":
-        df.to_csv(path, index=False)
-
-    elif filetype == "pdf":
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-
-        for i in range(len(df)):
-            pdf.cell(200, 10, txt=str(df.iloc[i].to_dict()), ln=True)
-
-        pdf.output(path)
-
-    flash("Report generated successfully!", "success")
-    return redirect(url_for("generate_reports"))
-
-@app.route("/download_report/<filename>")
-@login_required
-def download_report(filename):
-    return send_from_directory(REPORT_FOLDER, filename, as_attachment=True)
-
-
-@app.route("/delete_report/<filename>")
-@login_required
-def delete_report(filename):
-    path = os.path.join(REPORT_FOLDER, filename)
-
-    if os.path.exists(path):
-        os.remove(path)
-        flash("Report deleted", "success")
-    else:
-        flash("File not found", "danger")
-
-    return redirect(url_for("generate_reports"))
 
 # ---------------- THREAT PREDICTION ----------------
 @app.route("/threat_prediction", methods=["GET", "POST"])
@@ -242,7 +186,11 @@ def threat_prediction():
             results=df[["Prediction"]].head(50).to_html(classes="table table-dark", index=False)
         )
 
-    return render_template("threat_prediction.html")
+    return render_template(
+    "threat_prediction.html",
+    data=True,
+    predictions=df.to_dict(orient="records")
+)
 
 # ---------------- MANAGE USERS----------------
 @app.route("/manage_users", methods=["GET", "POST"])
